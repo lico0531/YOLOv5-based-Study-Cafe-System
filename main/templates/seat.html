@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>좌석 선택</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- 구글 폰트 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Do+Hyeon&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css"> 
+</head>
+
+<body>
+    <div class="container">
+        <h1>좌석 선택</h1>
+        <div id="seatMap">
+            <!-- 좌석 배치도는 여기서 생성됩니다 -->
+        </div>
+        <div id="seatInfo"></div>
+        <div class="additional-buttons">
+            <button id="deselectButton" style="display: none;">퇴실하기</button>
+            <button id="logoutButton" style="display: block;">로그아웃</button>
+        </div>
+    </div>
+    <script>
+        // 좌석 배치도 생성
+        function createSeatMap(rows, cols) {
+            const seatMap = document.getElementById('seatMap');
+            for (let i = 1; i <= rows; i++) {
+                const row = document.createElement('div');
+                row.className = 'seat-row';
+                for (let j = 1; j <= cols; j++) {
+                    const seat = document.createElement('div');
+                    seat.className = 'seat';
+                    seat.dataset.seatNumber = `${i}-${j}`;
+                    seat.innerText = `${i}-${j}`;
+                    seat.addEventListener('click', selectSeat);
+                    row.appendChild(seat);
+                }
+                seatMap.appendChild(row);
+            }
+        }
+
+        // 좌석 선택 함수
+        async function selectSeat(event) {
+            const seatNumber = event.target.dataset.seatNumber;
+            console.log(`Selecting seat: ${seatNumber}`); // 로그 추가
+
+            const response = await fetch('/seat/select', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ seat: seatNumber })
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                alert('좌석 선택 성공');
+                window.location.reload(); // 페이지 새로고침
+            } else {
+                alert('좌석 선택 실패: ' + result.message);
+            }
+        }
+
+        document.getElementById('deselectButton').addEventListener('click', async () => {
+            const response = await fetch('/seat/deselect', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                alert('퇴실 성공');
+                window.location.reload(); // 페이지 새로고침
+            } else {
+                alert('퇴실 실패: ' + result.message);
+            }
+        });
+
+        document.getElementById('logoutButton').addEventListener('click', async () => {
+            const response = await fetch('/auth/logout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                alert('로그아웃 성공');
+                window.location.href = '/'; // 로그인 페이지로 리다이렉트
+            } else {
+                alert('로그아웃 실패: ' + result.message);
+            }
+        });
+
+        // 로그인 상태 확인
+        async function checkLoginStatus() {
+            const response = await fetch('/auth/check', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                document.getElementById('logoutButton').style.display = 'block';
+            } else {
+                window.location.href = '/'; // 로그인 페이지로 리다이렉트
+            }
+        }
+
+        async function fetchSeatInfo() {
+        try {
+            const response = await fetch('/seat/seats', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                result.seats.forEach(seat => {
+                    const seatElement = document.querySelector(`.seat[data-seat-number="${seat.seat}"]`);
+                    if (seatElement) {
+                        seatElement.classList.add('occupied');
+                    }
+                });
+
+                if (result.seats.length > 0) {
+                    document.getElementById('deselectButton').style.display = 'block';
+                }
+            } else {
+                console.error('Failed to fetch seat info:', result.message); // 오류 로그 추가
+                alert('좌석 정보를 가져오는 데 실패했습니다: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Error fetching seat info:', error); // 오류 로그 추가
+            if (error.message === "Unauthorized") {
+                alert('좌석 정보를 가져오는 데 실패했습니다: Unauthorized');
+                window.location.href = '/'; // 로그인 페이지로 리다이렉트
+            } else {
+                alert('좌석 정보를 가져오는 데 실패했습니다.');
+            }
+        }
+    }
+
+    fetchSeatInfo();
+    checkLoginStatus();
+    createSeatMap(5, 5); // 5x5 좌석 배치도 생성
+</script>
+</body>
+
+</html>
