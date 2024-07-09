@@ -38,7 +38,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "main",
-    'main.apps.KioskConfig',  # 앱 설정 등록
+    #'main.apps.KioskConfig',  # 앱 설정 등록
 ]
 
 MIDDLEWARE = [
