@@ -59,103 +59,51 @@
             const result = await response.json();
             if (result.success) {
                 alert('좌석 선택 성공');
+                event.target.classList.add('occupied'); // 좌석을 빨간색으로 표시
                 window.location.reload(); // 페이지 새로고침
             } else {
                 alert('좌석 선택 실패: ' + result.message);
             }
         }
 
-        document.getElementById('deselectButton').addEventListener('click', async () => {
-            const response = await fetch('/seat/deselect', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            const result = await response.json();
-            if (result.success) {
-                alert('퇴실 성공');
-                window.location.reload(); // 페이지 새로고침
-            } else {
-                alert('퇴실 실패: ' + result.message);
-            }
-        });
-
-        document.getElementById('logoutButton').addEventListener('click', async () => {
-            const response = await fetch('/auth/logout', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            const result = await response.json();
-            if (result.success) {
-                alert('로그아웃 성공');
-                window.location.href = '/'; // 로그인 페이지로 리다이렉트
-            } else {
-                alert('로그아웃 실패: ' + result.message);
-            }
-        });
-
-        // 로그인 상태 확인
-        async function checkLoginStatus() {
-            const response = await fetch('/auth/check', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            const result = await response.json();
-            if (result.success) {
-                document.getElementById('logoutButton').style.display = 'block';
-            } else {
-                window.location.href = '/'; // 로그인 페이지로 리다이렉트
-            }
-        }
-
         async function fetchSeatInfo() {
-        try {
-            const response = await fetch('/seat/seats', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            const result = await response.json();
-            if (result.success) {
-                result.seats.forEach(seat => {
-                    const seatElement = document.querySelector(`.seat[data-seat-number="${seat.seat}"]`);
-                    if (seatElement) {
-                        seatElement.classList.add('occupied');
+            try {
+                const response = await fetch('/seat/seats', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
                     }
                 });
 
-                if (result.seats.length > 0) {
-                    document.getElementById('deselectButton').style.display = 'block';
+                const result = await response.json();
+                if (result.success) {
+                    result.seats.forEach(seat => {
+                        const seatElement = document.querySelector(`.seat[data-seat-number="${seat.seat}"]`);
+                        if (seatElement) {
+                            seatElement.classList.add('occupied');
+                        }
+                    });
+
+                    if (result.seats.length > 0) {
+                        document.getElementById('deselectButton').style.display = 'block';
+                    }
+                } else {
+                    console.error('Failed to fetch seat info:', result.message); // 오류 로그 추가
+                    alert('좌석 정보를 가져오는 데 실패했습니다: ' + result.message);
                 }
-            } else {
-                console.error('Failed to fetch seat info:', result.message); // 오류 로그 추가
-                alert('좌석 정보를 가져오는 데 실패했습니다: ' + result.message);
-            }
-        } catch (error) {
-            console.error('Error fetching seat info:', error); // 오류 로그 추가
-            if (error.message === "Unauthorized") {
-                alert('좌석 정보를 가져오는 데 실패했습니다: Unauthorized');
-                window.location.href = '/'; // 로그인 페이지로 리다이렉트
-            } else {
-                alert('좌석 정보를 가져오는 데 실패했습니다.');
+            } catch (error) {
+                console.error('Error fetching seat info:', error); // 오류 로그 추가
+                if (error.message === "Unauthorized") {
+                    alert('좌석 정보를 가져오는 데 실패했습니다: 권한이 없습니다');
+                    window.location.href = '/'; // 로그인 페이지로 리다이렉트
+                } else {
+                    alert('좌석 정보를 가져오는 데 실패했습니다: 서버 오류');
+                }
             }
         }
-    }
-
-    fetchSeatInfo();
-    checkLoginStatus();
-    createSeatMap(5, 5); // 5x5 좌석 배치도 생성
-</script>
+        fetchSeatInfo();
+        createSeatMap(5, 5); // 5x5 좌석 배치도 생성
+    </script>
 </body>
 
 </html>
