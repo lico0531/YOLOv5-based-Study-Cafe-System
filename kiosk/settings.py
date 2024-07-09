@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "main",
+    'main.apps.KioskConfig',  # 앱 설정 등록
 ]
 
 MIDDLEWARE = [
@@ -75,10 +76,14 @@ WSGI_APPLICATION = "kiosk.wsgi.application"
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
+        'default': {
+            'ENGINE': 'djongo',
+            'NAME': 'userdata',
+            'ENFORCE_SCHEMA': False,
+            'CLIENT': {
+                'host': "mongodb+srv://shlico0531:kiosk@kiosk.edi8kfi.mongodb.net/userdata?retryWrites=true&w=majority&appName=KIOSK"
+            }  
+        }
 }
 
 
